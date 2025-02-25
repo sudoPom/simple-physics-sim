@@ -11,6 +11,7 @@
 #define COLOUR_WHITE 0xffffffff
 
 #define RADIUS 100
+#define MASS 10
 
 typedef SDL_Color SDL_Colour;
 
@@ -18,6 +19,8 @@ typedef struct {
   double x;
   double y;
   double r;
+  double mass;
+  double vx, vy;
 } Circle;
 
 void draw_circle(SDL_Surface *surface, Circle *circle, Uint32 colour) {
@@ -32,6 +35,10 @@ void draw_circle(SDL_Surface *surface, Circle *circle, Uint32 colour) {
     }
   }
 }
+
+// TODO: Circle Acceleration
+// * Circle - circle collision
+// * Circle - window collision
 
 int main(int argc, char *argv[]) {
 
@@ -66,8 +73,7 @@ int main(int argc, char *argv[]) {
       }
       if (event.type == SDL_EVENT_MOUSE_BUTTON_UP &&
           event.button.button == SDL_BUTTON_LEFT) {
-        printf("%d\n", event.button.button);
-        Circle circle = {event.button.x, event.button.y, RADIUS};
+        Circle circle = {event.button.x, event.button.y, RADIUS, MASS, 0, 0};
         draw_circle(surface, &circle, COLOUR_WHITE);
         SDL_UpdateWindowSurface(window);
       }
