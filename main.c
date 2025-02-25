@@ -6,17 +6,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define WIDTH 1920
-#define HEIGHT 1080
+#define WIDTH 2540
+#define HEIGHT 1300
 
 #define COLOUR_WHITE 0xffffffff
 #define COLOUR_BLACK 0x00000000
-#define MAX_BALLS 100
+#define TRANSPARENT 0x000000ff
+#define MAX_BALLS 1000000
+#define BURST_COUNT 100
 
 #define GRAVITY 0.5
-#define ELASTICITY 1.0
-#define RADIUS 80
+#define ELASTICITY 0.7
+#define RADIUS 2
 #define MASS 10
+
+#define MIN_STARTING_SPEED 0
 
 typedef SDL_Color SDL_Colour;
 
@@ -34,9 +38,14 @@ void init_circle(Circle *circle, double x, double y, double r, double mass,
   circle->x = x;
   circle->y = y;
   circle->r = r;
+  int directions[] = {1.0, -1.0};
   circle->mass = mass;
-  circle->vx = vx;
-  circle->vy = vy;
+  circle->vx =
+      (rand() % (int)(vx + 1 - MIN_STARTING_SPEED) + MIN_STARTING_SPEED) *
+      directions[rand() % 2];
+  circle->vy =
+      (rand() % (int)(vx + 1 - MIN_STARTING_SPEED) + MIN_STARTING_SPEED) *
+      directions[rand() % 2];
   circle->colour = colour;
 }
 
@@ -74,7 +83,6 @@ void accelerate_circles(Circle **circles, int num_circles) {
 void draw_circles(SDL_Surface *surface, Circle **circles, int num_circles) {
   for (int i = 0; i < num_circles; i++) {
     Circle *circle = circles[i];
-    printf("%f\n", circle->y);
     draw_circle(surface, circle);
   }
 }
@@ -99,12 +107,36 @@ void collide_floor(Circle *circle) {
   }
 }
 
+void collide_right(Circle *circle) {
+  if ((circle->x >= WIDTH - circle->r)) {
+    double lower_bound = WIDTH - circle->r;
+    circle->x = circle->x > lower_bound ? lower_bound : circle->x;
+    circle->vx = circle->vx * ELASTICITY * -1.0;
+  }
+}
+
+void collide_left(Circle *circle) {
+  if ((circle->x <= circle->r)) {
+    double lower_bound = circle->r;
+    circle->x = circle->x <= lower_bound ? lower_bound : circle->x;
+    circle->vx = circle->vx * ELASTICITY * -1.0;
+  }
+}
+
 void collide_circles(Circle **circles, int num_circles) {
   for (int i = 0; i < num_circles; i++) {
     Circle *circle = circles[i];
     collide_floor(circle);
     collide_ceil(circle);
+    collide_left(circle);
+    collide_right(circle);
   }
+}
+
+void add_circle(Circle **circles, int *circle_count, double x, double y) {
+  Circle *circle = (Circle *)malloc(sizeof(Circle));
+  init_circle(circle, x, y, RADIUS, MASS, 50, 50, COLOUR_WHITE);
+  circles[(*circle_count)++] = circle;
 }
 
 // TODO: Circle Acceleration
@@ -123,6 +155,7 @@ int main(int argc, char *argv[]) {
   SDL_Init(SDL_INIT_VIDEO);
 
   window = SDL_CreateWindow("Physics Sim", WIDTH, HEIGHT, 0);
+  SDL_SetWindowOpacity(window, 1.0);
   surface = SDL_GetWindowSurface(window);
   erase_rect = (SDL_Rect){0, 0, WIDTH, HEIGHT};
 
@@ -144,19 +177,27 @@ int main(int argc, char *argv[]) {
       if (event.type == SDL_EVENT_QUIT) {
         done = true;
       }
-      if (event.type == SDL_EVENT_MOUSE_BUTTON_UP &&
-          event.button.button == SDL_BUTTON_LEFT && circle_count < MAX_BALLS) {
-        Circle *circle = (Circle *)malloc(sizeof(Circle));
-        init_circle(circle, event.button.x, event.button.y, RADIUS, MASS, 0, 0,
-                    COLOUR_WHITE);
-        circles[circle_count++] = circle;
+      if ((event.type == SDL_EVENT_MOUSE_BUTTON_UP &&
+           event.button.button == SDL_BUTTON_LEFT) &&
+          circle_count < MAX_BALLS) {
+        add_circle(circles, &circle_count, event.button.x, event.button.y);
+      }
+      if (event.button.button == SDL_BUTTON_RIGHT && event.button.down &&
+          event.type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
+          circle_count < MAX_BALLS) {
+        for (int i = 0; i < BURST_COUNT; i++) {
+          if (circle_count >= MAX_BALLS) {
+            break;
+          }
+          add_circle(circles, &circle_count, event.button.x, event.button.y);
+        }
       }
     }
     accelerate_circles(circles, circle_count);
     collide_circles(circles, circle_count);
     draw_circles(surface, circles, circle_count);
     SDL_UpdateWindowSurface(window);
-    SDL_Delay(6);
+    SDL_Delay(10);
     // Do game logic, present a frame, etc.
   }
 
