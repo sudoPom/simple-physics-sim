@@ -16,11 +16,12 @@
 #define BURST_COUNT 100
 
 #define GRAVITY 0.5
-#define ELASTICITY 0.7
-#define RADIUS 2
+#define ELASTICITY 1.1
+#define RADIUS 1
 #define MASS 10
 
-#define MIN_STARTING_SPEED 0
+#define MIN_STARTING_SPEED 1
+#define MAX_STARTING_SPEED 30
 
 typedef SDL_Color SDL_Colour;
 
@@ -34,18 +35,18 @@ typedef struct {
 } Circle;
 
 void init_circle(Circle *circle, double x, double y, double r, double mass,
-                 double vx, double vy, Uint32 colour) {
+                 Uint32 colour) {
   circle->x = x;
   circle->y = y;
   circle->r = r;
   int directions[] = {1.0, -1.0};
   circle->mass = mass;
-  circle->vx =
-      (rand() % (int)(vx + 1 - MIN_STARTING_SPEED) + MIN_STARTING_SPEED) *
-      directions[rand() % 2];
-  circle->vy =
-      (rand() % (int)(vx + 1 - MIN_STARTING_SPEED) + MIN_STARTING_SPEED) *
-      directions[rand() % 2];
+  circle->vx = (rand() % (int)(MAX_STARTING_SPEED + 1 - MIN_STARTING_SPEED) +
+                MIN_STARTING_SPEED) *
+               directions[rand() % 2];
+  circle->vy = (rand() % (int)(MAX_STARTING_SPEED + 1 - MIN_STARTING_SPEED) +
+                MIN_STARTING_SPEED) *
+               directions[rand() % 2];
   circle->colour = colour;
 }
 
@@ -135,7 +136,7 @@ void collide_circles(Circle **circles, int num_circles) {
 
 void add_circle(Circle **circles, int *circle_count, double x, double y) {
   Circle *circle = (Circle *)malloc(sizeof(Circle));
-  init_circle(circle, x, y, RADIUS, MASS, 50, 50, COLOUR_WHITE);
+  init_circle(circle, x, y, RADIUS, MASS, COLOUR_WHITE);
   circles[(*circle_count)++] = circle;
 }
 
