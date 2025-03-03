@@ -16,14 +16,12 @@
 #define BURST_COUNT 100
 
 #define GRAVITY 0.5
-#define ELASTICITY 1.1
-#define RADIUS 1
+#define ELASTICITY 1.0009
+#define RADIUS 2
 #define MASS 10
 
 #define MIN_STARTING_SPEED 1
 #define MAX_STARTING_SPEED 30
-
-typedef SDL_Color SDL_Colour;
 
 typedef struct {
   double x;
